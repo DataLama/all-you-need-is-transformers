@@ -11,7 +11,6 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 
 from tokenizers import ByteLevelBPETokenizer
-from tokenizers.trainers import BpeTrainer
 
 if __name__=='__main__':
     # define basic variables
@@ -23,7 +22,8 @@ if __name__=='__main__':
         os.mkdir(data_dir)
     
     # download data
-    subprocess.check_output([download_shell], shell=True)
+    if not os.path.exists(data_dir / 'KEnglish_Text_Corpus_sample.zip'):
+        subprocess.check_output([download_shell], shell=True)
     
     # load data and train, dev split
     df = pd.DataFrame([], columns=['ko', 'en'])
@@ -48,15 +48,14 @@ if __name__=='__main__':
     
     tokenizer = ByteLevelBPETokenizer(dropout=0.1,  # dropout bpe
                                       unicode_normalizer='nfkc') # nfkc
-    
     tokenizer.train(
-            files=[ko_path / 'tokenizer_train_ko.txt'],
+        # tokenizers 같은 경우 rust 코드를 python으로 wrapping했기 때문 경로 관련 정보는 반드시 str으로 넘겨줘. 
+            files=[f"{ko_path}/tokenizer_train_ko.txt"], 
             vocab_size=10000,
             min_frequency=2,
             show_progress=True,
-            special_tokens = ['[PAD]', '[SOS]', '[EOS]', '[UNK]']
-                    )
-    tokenizer.model.save(ko_path)
+            special_tokens = ['[PAD]', '[SOS]', '[EOS]', '[UNK]'])
+    tokenizer.save(f"{ko_path}")
     
     # en
     en_path = data_dir / 'en'
@@ -68,13 +67,13 @@ if __name__=='__main__':
 
     tokenizer = ByteLevelBPETokenizer(dropout=0.1,  # dropout bpe
                                       unicode_normalizer='nfkc') # nfkc
-        tokenizer.train(
-            files=[ko_path / 'tokenizer_train_en.txt'],
+    tokenizer.train(
+            files=[f"{en_path}/tokenizer_train_en.txt"],
             vocab_size=10000,
             min_frequency=2,
             show_progress=True,
             special_tokens = ['[PAD]', '[SOS]', '[EOS]', '[UNK]']
                     )
-    tokenizer.model.save(ko_path)
+    tokenizer.save(f"{en_path}")
 
     
